@@ -11,6 +11,10 @@ Made changes in `CMakeLists.txt` to work with `Intellij CLion`
 
 ---
 
+### Changes you need to make
 
-__Important__ download information can be found [here](https://github.com/grblHAL/core/wiki/Compiling-grblHAL).  
+Update the path to final `grblHAL.uf2` file in `uf2Copier.sh`
+
+### __Important__
+Download information can be found [here](https://github.com/grblHAL/core/wiki/Compiling-grblHAL).  
 The project has been updated to/now uses [SDK version 2.1.0](https://github.com/raspberrypi/pico-sdk/releases).
