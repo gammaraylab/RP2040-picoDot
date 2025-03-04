@@ -49,20 +49,6 @@
 #endif
 #endif
 
-#if defined(WEBUI_ENABLE) && WEBUI_ENABLE
-#ifndef WEBUI_INFLASH
-#define WEBUI_INFLASH 1
-#endif
-#if WEBUI_INFLASH
-#if defined(LITTLEFS_ENABLE) && LITTLEFS_ENABLE == 0
-#undef LITTLEFS_ENABLE
-#endif
-#ifndef LITTLEFS_ENABLE
-#define LITTLEFS_ENABLE 1
-#endif
-#endif
-#endif
-
 #include "grbl/driver_opts.h"
 
 #if ETHERNET_ENABLE && WIFI_ENABLE
@@ -142,31 +128,17 @@
 */
 
 #ifdef BOARD_CNC_BOOSTERPACK
-  #include "cnc_boosterpack_map.h"
+#include "cnc_boosterpack_map.h"
 #elif defined(BOARD_PICO_CNC)
-  #include "boards/pico_cnc_map.h"
-#elif defined(BOARD_RP23U5XBB)
-  #include "boards/RP2350B_5X_map.h"
-#elif defined(BOARD_PICOBOB)
-  #include "boards/picobob_map.h"
-#elif defined(BOARD_PICOBOB_G540)
-  #include "boards/picobob_g540_map.h"  
-#elif defined(BOARD_PICOBOB_DLX)
-  #include "boards/picobob_dlx_map.h" 
-#elif defined(BOARD_PICOBOB_DLX_G540)
-  #include "boards/picobob_dlx_g540_map.h"
-#elif defined(BOARD_PICOHAL)
-  #include "boards/picohal_map.h"        
-#elif defined(BOARD_BTT_SKR_PICO_10)
-  #include "boards/btt_skr_pico_10_map.h"
-#elif defined BOARD_CITOH_CX6000
-  #include "boards/citoh_cx6000_map.h"
+#include "boards/pico_cnc_map.h"
 #elif defined(BOARD_MY_MACHINE)
-  #include "boards/my_machine_map.h"
+#include "boards/my_machine_map.h"
 #elif defined(BOARD_GENERIC_4AXIS)
-  #include "boards/generic_map_4axis.h"
+#include "boards/generic_map_4axis.h"
+#elif defined(BOARD_PICO_DOT)
+#include "boards/pico_dot_map.h"
 #else // default board
-  #include "boards/generic_map.h"
+#include "boards/generic_map.h"
 #endif
 
 #if SPI_ENABLE
@@ -235,7 +207,7 @@
 #define I2C_SCL     27
 #endif
 
-#if TRINAMIC_ENABLE 
+#if TRINAMIC_ENABLE
 #ifndef TRINAMIC_MIXED_DRIVERS
 #define TRINAMIC_MIXED_DRIVERS 1
 #endif
@@ -365,7 +337,7 @@ void pinEnableIRQ (const input_signal_t *input, pin_irq_mode_t irq_mode);
 
 static inline void __enable_irq(void)
 {
-  __asm volatile ("cpsie i" : : : "memory");
+    __asm volatile ("cpsie i" : : : "memory");
 }
 
 /**
@@ -375,7 +347,7 @@ static inline void __enable_irq(void)
  */
 static inline  void __disable_irq(void)
 {
-  __asm volatile ("cpsid i" : : : "memory");
+    __asm volatile ("cpsid i" : : : "memory");
 }
 
 #endif // __DRIVER_H__

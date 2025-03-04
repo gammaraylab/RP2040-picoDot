@@ -35,7 +35,7 @@
 #include "hardware/gpio.h"
 #include "hardware/pwm.h"
 #include "hardware/clocks.h"
-#include "hardware/spi.h"
+//#include "hardware/spi.h"
 #include "hardware/structs/systick.h"
 #include "hardware/structs/iobank0.h"
 #include "hardware/structs/sio.h"
@@ -96,10 +96,6 @@
 
 #if EEPROM_ENABLE
 #include "eeprom/eeprom.h"
-#endif
-
-#if ODOMETER_ENABLE
-#include "odometer/odometer.h"
 #endif
 
 #if PPI_ENABLE
@@ -173,17 +169,6 @@ static uint c_step_sm;
 #endif
 #endif // GPIO_PIO_1
 
-#ifdef NEOPIXELS_PIN
-
-#ifndef NEOPIXELS_NUM
-#define NEOPIXELS_NUM 0
-#endif
-
-static PIO neop_pio;
-static uint neop_sm;
-
-#endif
-
 typedef union {
     uint32_t value;
     struct {
@@ -234,10 +219,6 @@ static input_signal_t *safety_door;
 static ioexpand_t io_expander = {0};
 #endif
 
-#ifdef NEOPIXELS_PIN
-neopixel_cfg_t neopixel = { .intensity = 255 };
-#endif
-
 #include "grbl/stepdir_map.h"
 
 static input_signal_t *irq_pins[32] = {0};
@@ -285,22 +266,13 @@ static input_signal_t inputpin[] = {
     { .id = Input_LimitZ_Max,     .port = GPIO_INPUT, .pin = Z_LIMIT_PIN_MAX,     .group = PinGroup_Limit },
 #endif
 #ifdef A_LIMIT_PIN
-    { .id = Input_LimitA,         .port = GPIO_INPUT, .pin = A_LIMIT_PIN,         .group = PinGroup_Limit },
-#endif
-#ifdef A_LIMIT_PIN_MAX
-    { .id = Input_LimitA_Max,     .port = GPIO_INPUT, .pin = A_LIMIT_PIN_MAX,     .group = PinGroup_Limit },
+        { .id = Input_LimitA, .port = GPIO_INPUT, .pin = A_LIMIT_PIN, .group = PinGroup_Limit },
 #endif
 #ifdef B_LIMIT_PIN
-    { .id = Input_LimitB,         .port = GPIO_INPUT, .pin = B_LIMIT_PIN,         .group = PinGroup_Limit },
-#endif
-#ifdef B_LIMIT_PIN_MAX
-    { .id = Input_LimitB_Max,     .port = GPIO_INPUT, .pin = B_LIMIT_PIN_MAX,     .group = PinGroup_Limit },
+        { .id = Input_LimitB, .port = GPIO_INPUT, .pin = B_LIMIT_PIN, .group = PinGroup_Limit },
 #endif
 #ifdef C_LIMIT_PIN
-    { .id = Input_LimitC,         .port = GPIO_INPUT, .pin = C_LIMIT_PIN,         .group = PinGroup_Limit },
-#endif
-#ifdef C_LIMIT_PIN_MAX
-    { .id = Input_LimitC_Max,     .port = GPIO_INPUT, .pin = C_LIMIT_PIN_MAX,     .group = PinGroup_Limit },
+        { .id = Input_LimitC, .port = GPIO_INPUT, .pin = C_LIMIT_PIN, .group = PinGroup_Limit },
 #endif
 #ifndef AUX_DEVICES
   #ifdef PROBE_PIN
@@ -314,7 +286,7 @@ static input_signal_t inputpin[] = {
   #endif
 #endif // AUX_DEVICES
 #ifdef SPI_IRQ_PIN
-    { .id = Input_SPIIRQ,    .port = GPIO_INPUT, .pin = SPI_IRQ_PIN,    .group = PinGroup_SPI },
+        { .id = Input_SPIIRQ,    .port = GPIO_INPUT, .pin = SPI_IRQ_PIN,    .group = PinGroup_SPI },
 #endif
 #ifdef AUXINPUT0_PIN
     { .id = Input_Aux0, .port = GPIO_INPUT, .pin = AUXINPUT0_PIN, .group = PinGroup_AuxInput },
@@ -529,16 +501,16 @@ static output_signal_t outputpin[] = {
  #endif
     { .id = Output_SPIRST,       .port = GPIO_SR16, .pin = 15, .group = PinGroup_SPI },
 #else // !SD_SHIFT_REGISTER
- #if !(AUX_CONTROLS & AUX_CONTROL_SPINDLE)
-  #ifdef SPINDLE_ENABLE_PIN
+#if !(AUX_CONTROLS & AUX_CONTROL_SPINDLE)
+        #ifdef SPINDLE_ENABLE_PIN
     { .id = Output_SpindleOn,    .port = SPINDLE_ENABLE_PORT,     .pin = SPINDLE_ENABLE_PIN,    .group = PinGroup_SpindleControl},
   #endif
   #ifdef SPINDLE_DIRECTION_PIN
     { .id = Output_SpindleDir,   .port = SPINDLE_DIRECTION_PORT,     .pin = SPINDLE_DIRECTION_PIN, .group = PinGroup_SpindleControl},
   #endif
- #endif // AUX_CONTROL_SPINDLE
- #if !(AUX_CONTROLS & AUX_CONTROL_COOLANT)
-  #ifdef COOLANT_FLOOD_PIN
+#endif // AUX_CONTROL_SPINDLE
+#if !(AUX_CONTROLS & AUX_CONTROL_COOLANT)
+        #ifdef COOLANT_FLOOD_PIN
     { .id = Output_CoolantFlood, .port = COOLANT_FLOOD_PORT,     .pin = COOLANT_FLOOD_PIN,     .group = PinGroup_Coolant},
   #endif
   #ifdef COOLANT_MIST_PIN
@@ -586,16 +558,16 @@ static output_signal_t outputpin[] = {
  #endif
 #endif
 #ifdef AUXOUTPUT0_PWM_PIN
-    { .id = Output_Analog_Aux0, .port = GPIO_OUTPUT, .pin = AUXOUTPUT0_PWM_PIN, .group = PinGroup_AuxOutputAnalog, .mode = { PINMODE_PWM } },
+        { .id = Output_Analog_Aux0, .port = GPIO_OUTPUT, .pin = AUXOUTPUT0_PWM_PIN, .group = PinGroup_AuxOutputAnalog, .mode = { PINMODE_PWM } },
 #endif
 #ifdef AUXOUTPUT1_PWM_PIN
-    { .id = Output_Analog_Aux1, .port = GPIO_OUTPUT, .pin = AUXOUTPUT1_PWM_PIN, .group = PinGroup_AuxOutputAnalog, .mode = { PINMODE_PWM } },
+        { .id = Output_Analog_Aux1, .port = GPIO_OUTPUT, .pin = AUXOUTPUT1_PWM_PIN, .group = PinGroup_AuxOutputAnalog, .mode = { PINMODE_PWM } },
 #endif
 #ifdef AUXOUTPUT2_PWM_PIN
-    { .id = Output_Analog_Aux2, .port = GPIO_OUTPUT, .pin = AUXOUTPUT2_PWM_PIN, .group = PinGroup_AuxOutputAnalog, .mode = { PINMODE_PWM } },
+        { .id = Output_Analog_Aux2, .port = GPIO_OUTPUT, .pin = AUXOUTPUT2_PWM_PIN, .group = PinGroup_AuxOutputAnalog, .mode = { PINMODE_PWM } },
 #endif
 #ifdef AUXOUTPUT3_PWM_PIN
-    { .id = Output_Analog_Aux3, .port = GPIO_OUTPUT, .pin = AUXOUTPUT3_PWM_PIN, .group = PinGroup_AuxOutputAnalog, .mode = { PINMODE_PWM } },
+        { .id = Output_Analog_Aux3, .port = GPIO_OUTPUT, .pin = AUXOUTPUT3_PWM_PIN, .group = PinGroup_AuxOutputAnalog, .mode = { PINMODE_PWM } },
 #endif
 };
 
@@ -812,9 +784,9 @@ static inline __attribute__((always_inline)) void stepper_set_step (uint_fast8_t
   #endif
 #else
             pio_steps->set |= (1 << (X_STEP_PIN - STEP_PINS_BASE));
-  #if X_GANGED
+#if X_GANGED
             pio_steps->set |= (1 << (X2_STEP_PIN - STEP_PINS_BASE));
-  #endif
+#endif
 #endif
             break;
 
@@ -826,9 +798,9 @@ static inline __attribute__((always_inline)) void stepper_set_step (uint_fast8_t
   #endif
 #else
             pio_steps->set |= (1 << (Y_STEP_PIN - STEP_PINS_BASE));
-  #if Y_GANGED
+#if Y_GANGED
             pio_steps->set |= (1 << (Y2_STEP_PIN - STEP_PINS_BASE));
-  #endif
+#endif
 #endif
             break;
 
@@ -840,13 +812,13 @@ static inline __attribute__((always_inline)) void stepper_set_step (uint_fast8_t
   #endif
 #else
             pio_steps->set |= (1 << (Z_STEP_PIN - STEP_PINS_BASE));
-  #if Z_GANGED
+#if Z_GANGED
             pio_steps->set |= (1 << (Z2_STEP_PIN - STEP_PINS_BASE));
-  #endif
+#endif
 #endif
             break;
 #ifdef A_AXIS
-        case A_AXIS:
+            case A_AXIS:
   #if STEP_PORT == GPIO_PIO_1
             step_pulse_generate(a_step_pio, a_step_sm, pio_steps->value);
   #else
@@ -855,7 +827,7 @@ static inline __attribute__((always_inline)) void stepper_set_step (uint_fast8_t
             break;
 #endif
 #ifdef B_AXIS
-        case B_AXIS:
+            case B_AXIS:
   #if STEP_PORT == GPIO_PIO_1
             step_pulse_generate(b_step_pio, b_step_sm, pio_steps->value);
   #else
@@ -864,7 +836,7 @@ static inline __attribute__((always_inline)) void stepper_set_step (uint_fast8_t
             break;
 #endif
 #ifdef C_AXIS
-        case C_AXIS:
+            case C_AXIS:
   #if STEP_PORT == GPIO_PIO_1
             step_pulse_generate(c_step_pio, c_step_sm, pio_steps->value);
   #else
@@ -1075,11 +1047,11 @@ inline static __attribute__((always_inline)) void stepperSetStepOutputs (axes_si
 
     uint_fast8_t idx = 0;
 
-  #if STEP_PORT == GPIO_PIO
+#if STEP_PORT == GPIO_PIO
     pio_steps.set = 0;
- #elif STEP_PORT == GPIO_PIO_1
+#elif STEP_PORT == GPIO_PIO_1
     pio_steps.set = 1;
-  #endif
+#endif
 
     while(step_out.bits) {
         if(step_out.bits & 0b1)
@@ -1088,9 +1060,9 @@ inline static __attribute__((always_inline)) void stepperSetStepOutputs (axes_si
         step_out.bits >>= 1;
     }
 
-  #if STEP_PORT == GPIO_PIO
+#if STEP_PORT == GPIO_PIO
     step_pulse_generate(step_pio, step_sm, pio_steps.value);
-  #endif
+#endif
 
 #endif
 }
@@ -1195,17 +1167,17 @@ static inline __attribute__((always_inline)) void stepper_set_dir (uint_fast8_t 
 #endif
             break;
 #ifdef A_AXIS
-        case A_AXIS:
+            case A_AXIS:
             DIGITAL_OUT(A_DIRECTION_PIN, dir_out.a);
             break;
 #endif
 #ifdef B_AXIS
-        case B_AXIS:
+            case B_AXIS:
             DIGITAL_OUT(B_DIRECTION_PIN, dir_out.b);
             break;
 #endif
 #ifdef C_AXIS
-        case C_AXIS:
+            case C_AXIS:
             DIGITAL_OUT(C_DIRECTION_PIN, dir_out.c);
             break;
 #endif
@@ -1258,8 +1230,8 @@ static void stepperSetDirOutputs (axes_signals_t dir_out)
 
 #elif DIRECTION_PORT == GPIO_OUTPUT
 
- #if DIRECTION_OUTMODE == GPIO_MAP
- 
+#if DIRECTION_OUTMODE == GPIO_MAP
+
     gpio_put_masked(DIRECTION_MASK, dir_outmap[dir_out.mask]);
 
   #ifdef X2_DIRECTION_PIN
@@ -1389,11 +1361,11 @@ static void limitsEnable (bool on, axes_signals_t homing_cycle)
     } while (i);
 
 #if TRINAMIC_ENABLE
-//    trinamic_homing(homing_cycle.mask != 0);
+    //    trinamic_homing(homing_cycle.mask != 0);
 #endif
 }
 
-// Returns limit state as an limit_signals_t variable.
+// Returns limit state as a limit_signals_t variable.
 // Each bitfield bit indicates an axis limit, where triggered is 1 and not triggered is 0.
 inline static limit_signals_t limitsGetState (void)
 {
@@ -1423,20 +1395,11 @@ inline static limit_signals_t limitsGetState (void)
 #ifdef A_LIMIT_PIN
     signals.min.a = DIGITAL_IN(A_LIMIT_PIN);
 #endif
-#ifdef A_LIMIT_PIN_MAX
-    signals.max.a = DIGITAL_IN(A_LIMIT_PIN_MAX);
-#endif
 #ifdef B_LIMIT_PIN
     signals.min.b = DIGITAL_IN(B_LIMIT_PIN);
 #endif
-#ifdef B_LIMIT_PIN_MAX
-    signals.max.b = DIGITAL_IN(B_LIMIT_PIN_MAX);
-#endif
 #ifdef C_LIMIT_PIN
     signals.min.c = DIGITAL_IN(C_LIMIT_PIN);
-#endif
-#ifdef C_LIMIT_PIN_MAX
-    signals.max.c = DIGITAL_IN(C_LIMIT_PIN_MAX);
 #endif
 
     return signals;
@@ -1467,22 +1430,22 @@ static control_signals_t __not_in_flash_func(systemGetState)(void)
 
 #if AUX_CONTROLS_ENABLED
 
-  #ifdef SAFETY_DOOR_PIN
+#ifdef SAFETY_DOOR_PIN
     if(debounce.safety_door)
         signals.safety_door_ajar = Off;
     else
         signals.safety_door_ajar = DIGITAL_IN(SAFETY_DOOR_PIN);
-  #endif
-  #ifdef MOTOR_FAULT_PIN
+#endif
+#ifdef MOTOR_FAULT_PIN
     signals.motor_fault = DIGITAL_IN(MOTOR_FAULT_PIN);
-  #endif
-  #ifdef MOTOR_WARNING_PIN
+#endif
+#ifdef MOTOR_WARNING_PIN
     signals.motor_warning = DIGITAL_IN(MOTOR_WARNING_PIN);
-  #endif
+#endif
 
-  #if AUX_CONTROLS_SCAN
+#if AUX_CONTROLS_SCAN
     signals = aux_ctrl_scan_status(signals);
-  #endif
+#endif
 
 #endif // AUX_CONTROLS_ENABLED
 
@@ -1513,7 +1476,7 @@ static void probeConfigure (bool is_probe_away, bool probing)
         probe.triggered = hal.probe.get_state().triggered;
         pin_irq_mode_t irq_mode = probing && !probe.triggered ? (probe.inverted ? IRQ_Mode_Falling : IRQ_Mode_Rising) : IRQ_Mode_None;
         probe.irq_enabled = ioport_enable_irq(probe_port, irq_mode, aux_irq_handler) && irq_mode != IRQ_Mode_None;
-    } else { 
+    } else {
         if((probe.irq_enabled = probing))
             gpio_set_irq_enabled(PROBE_PIN, probe.inverted ? GPIO_IRQ_LEVEL_LOW : GPIO_IRQ_LEVEL_HIGH, true);
         else
@@ -1596,13 +1559,13 @@ static void aux_irq_handler (uint8_t port, bool state)
                 break;
 #endif
 #ifdef I2C_STROBE_PIN
-            case Input_I2CStrobe:
+                case Input_I2CStrobe:
                 if(i2c_strobe.callback)
                     i2c_strobe.callback(0, DIGITAL_IN(I2C_STROBE_PIN) == 0);
                 break;
 #endif
 #ifdef MPG_MODE_PIN
-            case Input_MPGSelect:
+                case Input_MPGSelect:
                 protocol_enqueue_foreground_task(mpg_select, NULL);
                 break;
 #endif
@@ -1802,8 +1765,8 @@ static void spindleSetStateVariable (spindle_ptrs_t *spindle, spindle_state_t st
     }
 
     spindleSetSpeed(spindle, state.on || (state.ccw && spindle->context.pwm->flags.cloned)
-                              ? spindle->context.pwm->compute_value(spindle->context.pwm, rpm, false)
-                              : spindle->context.pwm->off_value);
+                             ? spindle->context.pwm->compute_value(spindle->context.pwm, rpm, false)
+                             : spindle->context.pwm->off_value);
 }
 
 bool spindleConfig (spindle_ptrs_t *spindle)
@@ -2086,30 +2049,7 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
         }
 #endif
 
-#ifdef NEOPIXELS_PIN
 
-    if(neopixel.leds == NULL || hal.rgb0.num_devices != settings->rgb_strip.length0) {
-
-        if(settings->rgb_strip.length0 == 0)
-            settings->rgb_strip.length0 = hal.rgb0.num_devices;
-        else
-            hal.rgb0.num_devices = settings->rgb_strip.length0;
-
-        if(neopixel.leds) {
-            free(neopixel.leds);
-            neopixel.leds = NULL;
-        }
-
-        if(hal.rgb0.num_devices) {
-            neopixel.num_bytes = hal.rgb0.num_devices * sizeof(uint32_t);
-            if((neopixel.leds = calloc(neopixel.num_bytes, sizeof(uint8_t))) == NULL)
-                hal.rgb0.num_devices = 0;
-        }
-
-        neopixel.num_leds = hal.rgb0.num_devices;
-    }
-
-#endif
 
 #if SD_SHIFT_REGISTER
         pio_steps.length = (uint32_t)(10.0f * (settings->steppers.pulse_microseconds - 0.8f));
@@ -2275,17 +2215,17 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
                     input->mode.irq_mode = IRQ_Mode_Falling;
                     break;
 #if AUX_CONTROLS_ENABLED
-  #if SAFETY_DOOR_BIT
-                case Input_SafetyDoor:
+#if SAFETY_DOOR_BIT
+                    case Input_SafetyDoor:
                     safety_door = input;
                     input->mode.pull_mode = settings->control_disable_pullup.safety_door_ajar ? PullMode_Down : PullMode_Up;
                     input->mode.inverted = control_fei.safety_door_ajar;
                     input->mode.irq_mode = safety_door->invert ? IRQ_Mode_Low : IRQ_Mode_High;
                     break;
-  #endif
+#endif
 #endif
 #ifndef AUX_DEVICES
-                case Input_Probe:
+                    case Input_Probe:
                     input->mode.pull_mode = settings->probe.disable_probe_pullup ? PullMode_Down : PullMode_Up;
                     input->mode.inverted = settings->probe.invert_probe_pin;
                     break;
@@ -2332,38 +2272,38 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
         /*************************
          *  Output signals init  *
          *************************/
- 
+
         output_signal_t *output;
         i = sizeof(outputpin) / sizeof(output_signal_t);
 
         do {
             output = &outputpin[--i];
             if(output->port == GPIO_OUTPUT)
-              switch(output->id) {
+                switch(output->id) {
 
-                case Output_SpindleOn:
-                    output->mode.inverted = settings->pwm_spindle.invert.on;
-                    gpio_set_outover(output->pin, output->mode.inverted ? GPIO_OVERRIDE_INVERT : GPIO_OVERRIDE_NORMAL);
-                    break;
+                    case Output_SpindleOn:
+                        output->mode.inverted = settings->pwm_spindle.invert.on;
+                        gpio_set_outover(output->pin, output->mode.inverted ? GPIO_OVERRIDE_INVERT : GPIO_OVERRIDE_NORMAL);
+                        break;
 
-                case Output_SpindleDir:
-                    output->mode.inverted = settings->pwm_spindle.invert.ccw;
-                    gpio_set_outover(output->pin, output->mode.inverted ? GPIO_OVERRIDE_INVERT : GPIO_OVERRIDE_NORMAL);
-                    break;
+                    case Output_SpindleDir:
+                        output->mode.inverted = settings->pwm_spindle.invert.ccw;
+                        gpio_set_outover(output->pin, output->mode.inverted ? GPIO_OVERRIDE_INVERT : GPIO_OVERRIDE_NORMAL);
+                        break;
 
-                case Output_CoolantMist:
-                    output->mode.inverted = settings->coolant.invert.mist;
-                    gpio_set_outover(output->pin, output->mode.inverted ? GPIO_OVERRIDE_INVERT : GPIO_OVERRIDE_NORMAL);
-                    break;
+                    case Output_CoolantMist:
+                        output->mode.inverted = settings->coolant.invert.mist;
+                        gpio_set_outover(output->pin, output->mode.inverted ? GPIO_OVERRIDE_INVERT : GPIO_OVERRIDE_NORMAL);
+                        break;
 
-                case Output_CoolantFlood:
-                    output->mode.inverted = settings->coolant.invert.flood;
-                    gpio_set_outover(output->pin, output->mode.inverted ? GPIO_OVERRIDE_INVERT : GPIO_OVERRIDE_NORMAL);
-                    break;
+                    case Output_CoolantFlood:
+                        output->mode.inverted = settings->coolant.invert.flood;
+                        gpio_set_outover(output->pin, output->mode.inverted ? GPIO_OVERRIDE_INVERT : GPIO_OVERRIDE_NORMAL);
+                        break;
 
-                default:
-                    break;
-            }
+                    default:
+                        break;
+                }
         } while(i);
 
         // Activate GPIO IRQ
@@ -2412,15 +2352,15 @@ static void enumeratePins (bool low_level, pin_info_ptr pin_info, void *data)
     pin.port = NULL;
 
     if(ppin) do {
-        pin.id = id++;
-        pin.pin = ppin->pin.pin;
-        pin.function = ppin->pin.function;
-        pin.group = ppin->pin.group;
-        pin.mode = ppin->pin.mode;
-        pin.description = ppin->pin.description;
+            pin.id = id++;
+            pin.pin = ppin->pin.pin;
+            pin.function = ppin->pin.function;
+            pin.group = ppin->pin.group;
+            pin.mode = ppin->pin.mode;
+            pin.description = ppin->pin.description;
 
-        pin_info(&pin, data);
-    } while(ppin = ppin->next);
+            pin_info(&pin, data);
+        } while(ppin = ppin->next);
 }
 
 void registerPeriphPin (const periph_pin_t *pin)
@@ -2455,127 +2395,6 @@ void setPeriphPinDescription (const pin_function_t function, const pin_group_t g
             ppin = ppin->next;
     } while(ppin);
 }
-
-#ifdef NEOPIXELS_PIN
-
-static void _write (void)
-{
-    // 50 us delay if busy? DMA?
-    uint32_t *led = (uint32_t *)neopixel.leds;
-//    uint64_t now = getElapsedMicros();
-    
-    while(pio_sm_get_tx_fifo_level(neop_pio, neop_sm) != 0);
-//    while(getElapsedMicros() - now < 200);
-
-    for(uint_fast16_t i = 0; i < neopixel.num_leds; i++)
-        pio_sm_put_blocking(neop_pio, neop_sm, *led++);
-}
-
-static void neopixels_write (void)
-{
-    if(neopixel.num_leds > 1)
-        _write();
-}
-
-static void neopixel_out_masked (uint16_t device, rgb_color_t color, rgb_color_mask_t mask)
-{
-    if(neopixel.num_leds && device < neopixel.num_leds) {
-
-        uint8_t *led = &neopixel.leds[device * sizeof(uint32_t)] + 1;
-
-        color = rgb_set_intensity(color, neopixel.intensity);
-
-        if(mask.B)
-            *led++ = color.B;
-        else
-            led++;     
-
-        if(mask.R)
-            *led++ = color.R;
-        else
-            led++;
-
-        if(mask.G)
-            *led = color.G;
-
-       if(neopixel.num_leds == 1)
-            _write();
-    }
-}
-
-static void neopixel_out (uint16_t device, rgb_color_t color)
-{
-    neopixel_out_masked(device, color, (rgb_color_mask_t){ .mask = 0xFF });
-}
-
-static inline rgb_color_t rp_rgb_1bpp_unpack (uint8_t *led, uint8_t intensity)
-{
-    rgb_color_t color = {0};
-
-    if(intensity) {
-
-        color.B = *led++;
-        color.R = *led++; 
-        color.G = *led; 
-
-        color = rgb_reset_intensity(color, intensity);
-    }
-
-    return color;
-}
-
-static uint8_t neopixels_set_intensity (uint8_t intensity)
-{
-    uint8_t prev = neopixel.intensity;
-
-    if(neopixel.intensity != intensity) {
-
-        neopixel.intensity = intensity;
-
-        if(neopixel.num_leds) {
-
-            uint_fast16_t device = neopixel.num_leds;
-            do {
-                device--;
-                rgb_color_t color = rp_rgb_1bpp_unpack(&neopixel.leds[device * sizeof(uint32_t)] + 1, prev);
-                neopixel_out(device, color);
-            } while(device);
-
-            if(neopixel.num_leds > 1)
-                _write();
-        }
-    }
-
-    return prev;
-}
-
-#elif defined(LED_G_PIN)
-
-static void board_led_out (uint16_t device, rgb_color_t color)
-{
-    if(device == 0)
-        DIGITAL_OUT(LED_G_PIN, color.G != 0);
-}
-
-#elif WIFI_ENABLE || BLUETOOTH_ENABLE == 1
-
-static void cyw43_led_on (void *data)
-{
-    if(net.value)
-        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, data != NULL);
-}
-
-static void cyw43_led_out (uint16_t device, rgb_color_t color)
-{
-    if(device == 0) {
-        if(net.value) // Network stack is up?
-            cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, color.G != 0);
-        else
-            protocol_enqueue_foreground_task(cyw43_led_on, color.G ? (void *)1 : NULL);
-    }
-}
-
-#endif // NEOPIXELS_PIN
 
 // Initializes MCU peripherals
 static bool driver_setup (settings_t *settings)
@@ -2849,12 +2668,12 @@ bool driver_init (void)
             .pwm_invert = On,
   #if DRIVER_SPINDLE_ENABLE & SPINDLE_DIR
 
-            .direction = On
-  #endif
-        }
+                    .direction = On
+#endif
+            }
     };
 
- #else
+#else
 
     static const spindle_ptrs_t spindle = {
         .type = SpindleType_Basic,
@@ -2875,7 +2694,7 @@ bool driver_init (void)
         }
     };
 
- #endif
+#endif
 
     spindle_id = spindle_register(&spindle, DRIVER_SPINDLE_NAME);
 
@@ -2990,10 +2809,10 @@ bool driver_init (void)
 
     system_register_commands(&boot_commands);
 
-#endif // USB_SERIAL_CDC
+#endif
 
 #ifdef HAS_BOARD_INIT
-#if OUT_SHIFT_REGISTER
+    #if OUT_SHIFT_REGISTER
     board_init(&aux_inputs, &aux_outputs, &out_sr);
 #else
     if(aux_inputs.n_pins || aux_outputs.n_pins)
@@ -3076,8 +2895,8 @@ bool driver_init (void)
 
 #elif STEP_PORT == GPIO_PIO
 
-if(pio_claim_free_sm_and_add_program_for_gpio_range(&step_pulse_program, &step_pio, &step_sm, &pio_offset, STEP_PINS_BASE, N_AXIS + N_GANGED, false))
-   step_pulse_program_init(step_pio, step_sm, pio_offset, STEP_PINS_BASE, N_AXIS + N_GANGED, pio_clk);
+    if(pio_claim_free_sm_and_add_program_for_gpio_range(&step_pulse_program, &step_pio, &step_sm, &pio_offset, STEP_PINS_BASE, N_AXIS + N_GANGED, false))
+        step_pulse_program_init(step_pio, step_sm, pio_offset, STEP_PINS_BASE, N_AXIS + N_GANGED, PIO_CLK_DIV);
 
 #elif STEP_PORT == GPIO_SR8
 
@@ -3085,10 +2904,10 @@ if(pio_claim_free_sm_and_add_program_for_gpio_range(&step_pulse_program, &step_p
     step_dir_sr4_program_init(pio0, 0, pio_offset, SD_SR_DATA_PIN, SD_SR_SCK_PIN);
 
     pio_offset = pio_add_program(pio0, &sr_delay_program);
-    sr_delay_program_init(pio0, 1, pio_offset, pio_clk - 0.37f);
+    sr_delay_program_init(pio0, 1, pio_offset, 11.65f);
 
     pio_offset = pio_add_program(pio0, &sr_hold_program);
-    sr_hold_program_init(pio0, 2, pio_offset, pio_clk - 0.37f);
+    sr_hold_program_init(pio0, 2, pio_offset, 11.65f);
 
     pio_claim_sm_mask(pio0, 0b1111); // claim all state machines, no room for more programs
 sr8_sm = 0;
@@ -3117,45 +2936,6 @@ sr8_pio = sr8_delay_pio = sr8_hold_pio = pio0;
   #endif
     }
 #endif
-
-#ifdef NEOPIXELS_PIN
-
-    if(pio_claim_free_sm_and_add_program_for_gpio_range(&ws2812_program, &neop_pio, &neop_sm, &pio_offset, NEOPIXELS_PIN, 1, false)) {
-
-        ws2812_program_init(neop_pio, neop_sm, pio_offset, NEOPIXELS_PIN, 800000, false);
-
-        hal.rgb0.out = neopixel_out;
-        hal.rgb0.out_masked = neopixel_out_masked;
-        hal.rgb0.set_intensity = neopixels_set_intensity;
-        hal.rgb0.write = neopixels_write;
-        hal.rgb0.num_devices = NEOPIXELS_NUM;
-        hal.rgb0.flags = (rgb_properties_t){ .is_blocking = On, .is_strip = On };
-        hal.rgb0.cap = (rgb_color_t){ .R = 255, .G = 255, .B = 255 };
-
-        const periph_pin_t neopin = {
-            .group = PinGroup_LED,
-            .function = Output_LED_Adressable,
-            .pin = NEOPIXELS_PIN
-        };
-
-        registerPeriphPin(&neopin);
-    } // else report unavailable?
-
-#elif defined(LED_G_PIN)
-
-    hal.rgb0.out = board_led_out;
-    hal.rgb0.num_devices = 1;
-    hal.rgb0.cap = (rgb_color_t){ .R = 0, .G = 1, .B = 0 };
-
-#elif WIFI_ENABLE || BLUETOOTH_ENABLE == 1
-
-    hal.rgb0.out = cyw43_led_out;
-    hal.rgb0.num_devices = 1;
-    hal.rgb0.cap = (rgb_color_t){ .R = 0, .G = 1, .B = 0 };
-
-    hal.rgb0.out(0, hal.rgb0.cap);
-
-#endif // NEOPIXELS_PIN
 
 #include "grbl/plugins_init.h"
 
@@ -3212,7 +2992,7 @@ void pin_debounce (void *pin)
 #endif
 
     if(input->mode.irq_mode == IRQ_Mode_Change ||
-        (DIGITAL_IN(input->pin) ^ input->mode.inverted) == (input->mode.irq_mode == IRQ_Mode_Falling ? 0 : 1)) {
+       (DIGITAL_IN(input->pin) ^ input->mode.inverted) == (input->mode.irq_mode == IRQ_Mode_Falling ? 0 : 1)) {
 
         switch(input->group) {
 
@@ -3249,11 +3029,11 @@ void __not_in_flash_func(gpio_int_handler)(uint pin, uint32_t events)
 
     if((input = irq_pins[pin])) {
 
-    #if SPI_IRQ_BIT
+#if SPI_IRQ_BIT
         if(input->id == Input_SPIIRQ && spi_irq.callback)
             spi_irq.callback(0, DIGITAL_IN(input->pin) == 0);
         else
-    #endif
+#endif
         if(input->mode.debounce && task_add_delayed(pin_debounce, input, 40)) {
             gpio_set_irq_enabled(pin, GPIO_IRQ_ALL, false);
 #if SAFETY_DOOR_ENABLE
@@ -3262,35 +3042,35 @@ void __not_in_flash_func(gpio_int_handler)(uint pin, uint32_t events)
 #endif
         } else switch (input->group) {
 
-            case PinGroup_Probe:
-                if(input->id == Input_Probe) {
-                    if(probe.is_probing)
-                        probe.triggered = On;
-                    else {
-                        control_signals_t signals = {0};
-                        signals.probe_triggered = On;
-                        hal.control.interrupt_callback(signals);
-                    }
+                case PinGroup_Probe:
+                    if(input->id == Input_Probe) {
+                        if(probe.is_probing)
+                            probe.triggered = On;
+                        else {
+                            control_signals_t signals = {0};
+                            signals.probe_triggered = On;
+                            hal.control.interrupt_callback(signals);
+                        }
 //                    if(task_add_delayed(probe_irq_enable, input, 40))
 //                        gpio_set_irq_enabled(gpio, GPIO_IRQ_ALL, false);
-                }
-                break;
+                    }
+                    break;
 
-            case PinGroup_Control:
-                hal.control.interrupt_callback(systemGetState());
-                break;
+                case PinGroup_Control:
+                    hal.control.interrupt_callback(systemGetState());
+                    break;
 
-            case PinGroup_Limit:
-            case PinGroup_LimitMax:
-                hal.limits.interrupt_callback(limitsGetState());
-                break;
+                case PinGroup_Limit:
+                case PinGroup_LimitMax:
+                    hal.limits.interrupt_callback(limitsGetState());
+                    break;
 
-            case PinGroup_AuxInput:
-                ioports_event(input);
-                break;
+                case PinGroup_AuxInput:
+                    ioports_event(input);
+                    break;
 
-    #ifndef AUX_DEVICES
-      #ifdef I2C_STROBE_PIN
+#ifndef AUX_DEVICES
+                    #ifdef I2C_STROBE_PIN
             case PinGroup_I2C:
                 if(input->id == Input_I2CStrobe && i2c_strobe.callback)
                     i2c_strobe.callback(0, DIGITAL_IN(input->pin) == 0);
@@ -3301,10 +3081,10 @@ void __not_in_flash_func(gpio_int_handler)(uint pin, uint32_t events)
                 protocol_enqueue_foreground_task(mpg_select, NULL);
                 break;
       #endif
-    #endif // !AUX_DEVICES
-            default:
-                break;
-        }
+#endif // !AUX_DEVICES
+                default:
+                    break;
+            }
     }
 }
 
