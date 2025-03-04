@@ -25,8 +25,6 @@
 
 #include <math.h>
 #include <string.h>
-#include <stdlib.h>
-#include <MCP3221.h>
 
 #include "hardware/gpio.h"
 
