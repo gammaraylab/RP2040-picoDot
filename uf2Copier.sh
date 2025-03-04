@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the source and destination paths
-SOURCE_DIR="/home/anadi/Programs/pico/RP2040/cmake-build-debug"
+SOURCE_DIR="/home/anadi/Programs/pico/RP2040-picoDot/cmake-build-picodot"
 DEST_DIR="/media/anadi/RPI-RP2"
 
 # Check if any .uf2 files are present in the source directory
