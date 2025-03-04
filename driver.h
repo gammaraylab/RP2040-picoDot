@@ -127,18 +127,8 @@
 #define PPI_TIMER_IRQHandler        timerHANDLER(PPI_TIMER_N)
 */
 
-#ifdef BOARD_CNC_BOOSTERPACK
-#include "cnc_boosterpack_map.h"
-#elif defined(BOARD_PICO_CNC)
-#include "boards/pico_cnc_map.h"
-#elif defined(BOARD_MY_MACHINE)
-#include "boards/my_machine_map.h"
-#elif defined(BOARD_GENERIC_4AXIS)
-#include "boards/generic_map_4axis.h"
-#elif defined(BOARD_PICO_DOT)
-#include "boards/pico_dot_map.h"
-#else // default board
-#include "boards/generic_map.h"
+#ifdef BOARD_PICO_DOT
+    #include "boards/pico_dot_map.h"
 #endif
 
 #if SPI_ENABLE
@@ -172,15 +162,6 @@
 #endif
 #endif // SPINDLE_PORT
 
-#ifdef COOLANT_PORT
-#ifndef COOLANT_FLOOD_PORT
-#define COOLANT_FLOOD_PORT (void *)COOLANT_PORT
-#endif
-#ifndef COOLANT_MIST_PORT
-#define COOLANT_MIST_PORT (void *)COOLANT_PORT
-#endif
-#endif // COOLANT_PORT
-
 // Adjust STEP_PULSE_LATENCY to get accurate step pulse length when required, e.g if using high step rates.
 // The default value is calibrated for 10 microseconds length.
 // NOTE: step output mode, number of axes and compiler optimization settings may all affect this value.
@@ -190,28 +171,10 @@
 
 // End configuration
 
-#if EEPROM_ENABLE == 0
-#define FLASH_ENABLE 1
-#else
-#define FLASH_ENABLE 0
-#endif
-
-#ifdef IOEXPAND_ENABLE
-#undef I2C_ENABLE
-#define I2C_ENABLE 1
-#endif
-
 #if I2C_ENABLE && !defined(I2C_PORT)
 #define I2C_PORT    1
 #define I2C_SDA     26
 #define I2C_SCL     27
-#endif
-
-#if TRINAMIC_ENABLE
-#ifndef TRINAMIC_MIXED_DRIVERS
-#define TRINAMIC_MIXED_DRIVERS 1
-#endif
-#include "motors/trinamic.h"
 #endif
 
 #if USB_SERIAL_CDC
