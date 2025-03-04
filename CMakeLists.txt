@@ -43,7 +43,6 @@ add_executable(grblHAL
         serial.c
         usb_serial.c
         stdio_usb_descriptors.c
-        flash.c
         #    i2c.c
         #    spi.c
         #    PCA9654E.c
@@ -51,8 +50,6 @@ add_executable(grblHAL
         ioports_analog.c
         #    tmc_uart.c
         #    MCP3221.c
-        boards/pico_cnc.c
-        boards/btt_skr_pico_10.c
         #    littlefs/lfs.c
         #    littlefs/lfs_util.c
         #    littlefs_hal.c
