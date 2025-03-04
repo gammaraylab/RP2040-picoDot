@@ -51,7 +51,6 @@
 #include "driver.h"
 #include "serial.h"
 #include "driverPIO.pio.h"
-#include "ws2812.pio.h"
 
 #define AUX_DEVICES // until all drivers are converted?
 #ifndef AUX_CONTROLS
@@ -92,24 +91,8 @@
 #include "usb_serial.h"
 #endif
 
-#if EEPROM_ENABLE
-#include "eeprom/eeprom.h"
-#endif
-
 #if PPI_ENABLE
 #include "laser/ppi.h"
-#endif
-
-#if FLASH_ENABLE
-#include "flash.h"
-#endif
-
-#if IOEXPAND_ENABLE
-#include "ioexpand.h"
-#endif
-
-#if WIFI_ENABLE
-#include "wifi.h"
 #endif
 
 #if BLUETOOTH_ENABLE == 1
